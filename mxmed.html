@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MX1 MedKart</title>
+  <style>
+    :root {
+      --bg-light: #f4f6f9;
+      --bg-dark: #1c1e26;
+      --text-light: #333;
+      --text-dark: #f9f9f9;
+      --primary: #3498db;
+      --accent: #27ae60;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: var(--bg-light);
+      color: var(--text-light);
+    }
+
+    body.dark {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    header {
+      background: #2c3e50;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+    }
+
+    .switch-mode {
+      display: flex;
+      gap: 10px;
+    }
+
+    .switch-mode button {
+      padding: 6px 12px;
+      background: var(--primary);
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      font-size: 0.85rem;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #searchFilter {
+      margin: 1rem 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+    }
+
+    #searchBox,
+    #filterSelect,
+    #userLocation {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      flex: 1;
+      min-width: 150px;
+      font-size: 0.95rem;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      padding: 1rem 2rem;
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transform: scale(1);
+      transition: all 0.3s ease;
+    }
+
+    body.dark .card {
+      background: #2a2d38;
+      color: white;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .add-btn {
+      background: var(--accent);
+      color: white;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      margin-top: 10px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .cart {
+      position: fixed;
+      top: 70px;
+      right: -350px;
+      background: white;
+      width: 300px;
+      border-radius: 10px;
+      padding: 1rem;
+      max-height: 70vh;
+      overflow-y: auto;
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
+      transition: right 0.4s ease;
+      z-index: 999;
+    }
+
+    body.dark .cart {
+      background: #2e323e;
+      color: white;
+    }
+
+    .cart.open {
+      right: 10px;
+    }
+
+    .cart h2 {
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+    }
+
+    .cart-item {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    #locationPrompt {
+      margin: 1rem 2rem;
+      padding: 10px;
+      background: #ecf0f1;
+      border-radius: 10px;
+    }
+
+    @media screen and (max-width: 600px) {
+      header h1 {
+        font-size: 1.2rem;
+      }
+
+      .switch-mode button {
+        padding: 5px 8px;
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>MX1 MedKart</h1>
+    <div class="switch-mode">
+      <button onclick="switchMode()">Switch Theme</button>
+      <button onclick="toggleCart()">Cart</button>
+    </div>
+  </header>
+
+  <div id="locationPrompt">
+    <label>Enter your location: </label>
+    <input type="text" placeholder="City, Area" id="userLocation" />
+  </div>
+
+  <div id="searchFilter">
+    <input type="text" id="searchBox" placeholder="Search medicine..." oninput="filterMedicines()" />
+    <select id="filterSelect" onchange="filterMedicines()">
+      <option value="">All Categories</option>
+      <option value="tablet">Tablet</option>
+      <option value="syrup">Syrup</option>
+      <option value="ointment">Ointment</option>
+    </select>
+  </div>
+
+  <div class="product-grid" id="productGrid"></div>
+
+  <div class="cart" id="cart">
+    <h2>Your Cart</h2>
+    <div id="cartItems"></div>
+  </div>
+
+  <script>
+    const medicines = [
+      { name: 'Paracetamol', category: 'tablet' },
+      { name: 'Ibuprofen', category: 'tablet' },
+      { name: 'Amoxicillin', category: 'tablet' },
+      { name: 'Cough Syrup', category: 'syrup' },
+      { name: 'Vitamin C', category: 'tablet' },
+      { name: 'Cetirizine', category: 'tablet' },
+      { name: 'Insulin', category: 'injection' },
+      { name: 'Oral Rehydration', category: 'syrup' },
+      { name: 'Antacid Gel', category: 'syrup' },
+      { name: 'Aspirin', category: 'tablet' },
+      { name: 'Calcium Tablet', category: 'tablet' },
+      { name: 'Zincovit', category: 'tablet' },
+      { name: 'Metformin', category: 'tablet' },
+      { name: 'Betadine', category: 'ointment' },
+      { name: 'Loperamide', category: 'tablet' },
+      { name: 'Multivitamin Syrup', category: 'syrup' },
+      { name: 'Neosporin', category: 'ointment' },
+      { name: 'Hydrocortisone Cream', category: 'ointment' },
+      { name: 'B-complex', category: 'tablet' },
+      { name: 'Saline', category: 'injection' }
+    ];
+
+    let cart = [];
+
+    function renderMedicines(list) {
+      const container = document.getElementById('productGrid');
+      container.innerHTML = '';
+      list.forEach((med, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <h3>${med.name}</h3>
+          <button class="add-btn" onclick="addToCart(${index})">Add to Cart</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filterMedicines() {
+      const query = document.getElementById('searchBox').value.toLowerCase();
+      const filter = document.getElementById('filterSelect').value;
+      const filtered = medicines.filter(m =>
+        m.name.toLowerCase().includes(query) &&
+        (filter === '' || m.category === filter)
+      );
+      renderMedicines(filtered);
+    }
+
+    function addToCart(index) {
+      cart.push(medicines[index]);
+      updateCart();
+    }
+
+    function updateCart() {
+      const cartEl = document.getElementById('cartItems');
+      cartEl.innerHTML = cart.map(m => `<div class="cart-item">${m.name}</div>`).join('');
+    }
+
+    function toggleCart() {
+      document.getElementById('cart').classList.toggle('open');
+    }
+
+    function switchMode() {
+      document.body.classList.toggle('dark');
+    }
+
+    window.onload = () => renderMedicines(medicines);
+  </script>
+</body>
+
+</html>
